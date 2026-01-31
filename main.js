@@ -1,20 +1,34 @@
 
+const translations = {
+  en: {
+    title: 'Lotto Number Generator',
+    generate: 'Generate Numbers',
+  },
+  ko: {
+    title: '로또 번호 생성기',
+    generate: '번호 생성',
+  },
+};
+
 class LottoGenerator extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this.lang = localStorage.getItem('lotto-lang') || 'en';
 
     const wrapper = document.createElement('div');
     wrapper.setAttribute('class', 'lotto-generator');
 
     const title = document.createElement('h1');
-    title.textContent = 'Lotto Number Generator';
+    title.setAttribute('data-lang', 'title');
+    title.textContent = translations[this.lang].title;
 
     const numberContainer = document.createElement('div');
     numberContainer.setAttribute('class', 'number-container');
 
     const button = document.createElement('button');
-    button.textContent = 'Generate Numbers';
+    button.setAttribute('data-lang', 'generate');
+    button.textContent = translations[this.lang].generate;
     button.addEventListener('click', () => this.generateNumbers());
 
     const style = document.createElement('style');
@@ -69,6 +83,13 @@ class LottoGenerator extends HTMLElement {
     wrapper.append(title, numberContainer, button);
   }
 
+  setLanguage(lang) {
+    this.lang = lang;
+    localStorage.setItem('lotto-lang', lang);
+    this.shadowRoot.querySelector('[data-lang="title"]').textContent = translations[lang].title;
+    this.shadowRoot.querySelector('[data-lang="generate"]').textContent = translations[lang].generate;
+  }
+
   generateNumbers() {
     const numberContainer = this.shadowRoot.querySelector('.number-container');
     numberContainer.innerHTML = '';
@@ -89,3 +110,15 @@ class LottoGenerator extends HTMLElement {
 }
 
 customElements.define('lotto-generator', LottoGenerator);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const lottoGenerator = document.querySelector('lotto-generator');
+    
+    document.getElementById('lang-ko').addEventListener('click', () => {
+        lottoGenerator.setLanguage('ko');
+    });
+
+    document.getElementById('lang-en').addEventListener('click', () => {
+        lottoGenerator.setLanguage('en');
+    });
+});
