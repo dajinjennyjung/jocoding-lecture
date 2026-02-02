@@ -1,48 +1,217 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dan or Dajin Classifier</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 50px;
+            padding: 20px;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
         }
-        #webcam-container {
-            margin-top: 20px;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        #label-container {
-            margin-top: 20px;
-            font-size: 1.2em;
-        }
-        button {
+
+        .lang-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            color: #333;
+            border: none;
+            border-radius: 20px;
             padding: 10px 20px;
-            font-size: 1em;
             cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            width: auto;
+            margin: 0;
+        }
+
+        .lang-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
+            background: white;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .description {
+            text-align: center;
+            color: #666;
+            font-size: 1em;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .upload-section {
+            margin-bottom: 20px;
+        }
+
+        #image-upload {
+            display: none;
+        }
+
+        .upload-label {
+            display: block;
+            padding: 15px 30px;
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            font-weight: bold;
         }
-        button:hover {
+
+        .upload-label:hover {
             background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        #image-display-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        #uploaded-image {
+            display: none;
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #label-container {
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        #label-container div {
+            padding: 12px;
+            margin: 8px 0;
+            background: #f5f5f5;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-weight: 500;
+            color: #333;
+        }
+
+        #predict-button {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        #predict-button:hover {
+            background-color: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* 모바일 최적화 */
+        @media (max-width: 600px) {
+            .lang-toggle {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 0.85em;
+            }
+
+            .container {
+                padding: 20px;
+                margin-top: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .description {
+                font-size: 0.9em;
+            }
+
+            #uploaded-image {
+                max-height: 250px;
+            }
+
+            #label-container {
+                font-size: 1em;
+            }
+
+            #label-container div {
+                padding: 10px;
+            }
+
+            #predict-button {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Dan or Dajin Image Classifier</h1>
-    <input type="file" id="image-upload" accept="image/*">
-    <div id="image-display-container">
-        <img id="uploaded-image" src="#" alt="Uploaded Image" style="display:none; max-width:200px; max-height:200px;">
+    <button class="lang-toggle" id="lang-toggle">EN</button>
+
+    <div class="container">
+        <h1>🎯 Dan or Dajin Classifier</h1>
+        <p class="description" id="description">
+            사진을 넣으면 댄인지 다진인지 알려드립니다!<br>
+            이미지를 업로드하고 결과를 확인해보세요.
+        </p>
+
+        <div class="upload-section">
+            <label for="image-upload" class="upload-label" id="upload-label">📸 사진 업로드</label>
+            <input type="file" id="image-upload" accept="image/*">
+        </div>
+        <div id="image-display-container">
+            <img id="uploaded-image" src="#" alt="Uploaded Image">
+        </div>
+
+        <button id="predict-button" style="display:none;">
+            <span id="predict-text">🔍 결과 보기</span>
+        </button>
+
+        <div id="label-container"></div>
     </div>
-    <div id="label-container"></div>
-    <button id="predict-button" style="display:none;">show result</button>
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
@@ -52,6 +221,37 @@
 
         let model, labelContainer, maxPredictions;
         let uploadedImage; // Variable to store the uploaded image element
+        let currentLang = 'ko'; // Current language
+
+        // Language texts
+        const texts = {
+            ko: {
+                description: '사진을 넣으면 댄인지 다진인지 알려드립니다!<br>이미지를 업로드하고 결과를 확인해보세요.',
+                uploadLabel: '📸 사진 업로드',
+                predictButton: '🔍 결과 보기',
+                langButton: 'EN'
+            },
+            en: {
+                description: 'Upload a photo and find out if it\'s Dan or Dajin!<br>Upload an image and check the result.',
+                uploadLabel: '📸 Upload Photo',
+                predictButton: '🔍 Show Result',
+                langButton: 'KR'
+            }
+        };
+
+        // Toggle language
+        function toggleLanguage() {
+            currentLang = currentLang === 'ko' ? 'en' : 'ko';
+            updateTexts();
+        }
+
+        // Update all text elements
+        function updateTexts() {
+            document.getElementById('description').innerHTML = texts[currentLang].description;
+            document.getElementById('upload-label').innerHTML = texts[currentLang].uploadLabel;
+            document.getElementById('predict-text').innerHTML = texts[currentLang].predictButton;
+            document.getElementById('lang-toggle').textContent = texts[currentLang].langButton;
+        }
 
         // Load the image model and set up the image input
         async function init() {
@@ -70,6 +270,7 @@
 
                 document.getElementById("image-upload").addEventListener("change", handleImageUpload);
                 document.getElementById("predict-button").addEventListener("click", () => predict(uploadedImage));
+                document.getElementById("lang-toggle").addEventListener("click", toggleLanguage);
 
             } catch (error) {
                 console.error("Error loading model:", error);
